@@ -6,7 +6,22 @@ export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: any) {
-    await this.prisma.user.create({ data });
-    return data;
+    return await this.prisma.user.create({ data });
+  }
+
+  async list() {
+    return await this.prisma.user.findMany();
+  }
+
+  async show(id: number) {
+    return await this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async update(id: number, body: any) {
+    return await this.prisma.user.update({ where: { id }, data: body });
+  }
+
+  async delete(id: number) {
+    return await this.prisma.user.delete({ where: { id } });
   }
 }
