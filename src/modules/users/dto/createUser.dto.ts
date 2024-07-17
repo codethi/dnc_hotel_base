@@ -17,6 +17,7 @@ export class CreateUserDTO {
   password: string;
 
   @IsString()
+  @IsNotEmpty()
   @IsEnum(Role)
   @Transform(({ value }) => value ?? Role.USER)
   role: Role;
