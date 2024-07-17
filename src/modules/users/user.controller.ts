@@ -4,17 +4,20 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { CreateUserDTO } from './dto/createUser.dto';
+import { UpdateUserDTO } from './dto/updateUser.dto';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  async create(@Body() body) {
+  async create(@Body() body: CreateUserDTO) {
     const user = await this.userService.create(body);
     return user;
   }
@@ -26,19 +29,22 @@ export class UserController {
   }
 
   @Get(':id')
-  async show(@Param('id') id: string) {
+  async show(@Param('id', ParseIntPipe) id: number) {
     const user = await this.userService.show(Number(id));
     return user;
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateUserDTO,
+  ) {
     const user = await this.userService.update(Number(id), body);
     return user;
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', ParseIntPipe) id: number) {
     await this.userService.delete(Number(id));
     return { deleted: true };
   }
