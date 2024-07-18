@@ -12,7 +12,8 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { UpdateUserDTO } from './dto/updateUser.dto';
-import { LoggingInterceptor } from 'src/shared/interceptors/loggingInterceptor';
+import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
+import { ParamId } from 'src/shared/decorators/paramId.decorator';
 
 @UseInterceptors(LoggingInterceptor)
 @Controller('users')
@@ -33,7 +34,7 @@ export class UserController {
   }
 
   @Get(':id')
-  async show(@Param('id', ParseIntPipe) id: number) {
+  async show(@ParamId() id: number) {
     const user = await this.userService.show(Number(id));
     return user;
   }
