@@ -34,7 +34,7 @@ export class AuthService {
     };
   }
 
-  async validateToken(token: string): Promise<ValidateTokenDTO> {
+  validateToken(token: string): ValidateTokenDTO {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
@@ -45,11 +45,6 @@ export class AuthService {
     } catch (error) {
       return { valid: false, message: error.message };
     }
-  }
-
-  async validateUser(username: string, pass: string): Promise<any> {
-    // Lógica para validar usuário
-    return { username, pass };
   }
 
   async login({ email, password }: AuthLoginDTO) {
@@ -78,7 +73,7 @@ export class AuthService {
   }
 
   async reset({ token, password }: AuthResetPasswordDTO) {
-    const { valid, decoded } = await this.validateToken(token);
+    const { valid, decoded } = this.validateToken(token);
 
     if (!valid || !decoded) {
       throw new UnauthorizedException('Token is invalid');

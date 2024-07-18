@@ -7,6 +7,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -14,6 +16,7 @@ import { CreateUserDTO } from './dto/createUser.dto';
 import { UpdateUserDTO } from './dto/updateUser.dto';
 import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
 import { ParamId } from 'src/shared/decorators/paramId.decorator';
+import { AuthGuard } from 'src/shared/guards/auth.guard';
 
 @UseInterceptors(LoggingInterceptor)
 @Controller('users')
@@ -27,9 +30,11 @@ export class UserController {
     return user;
   }
 
+  @UseGuards(AuthGuard)
   @Get()
-  async list() {
+  async list(@Req() req) {
     const users = await this.userService.list();
+    console.log(req.user);
     return users;
   }
 
