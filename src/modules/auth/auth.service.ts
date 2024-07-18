@@ -19,11 +19,14 @@ export class AuthService {
   ) {}
 
   async generateToken(user: User, expiration: string = '1d') {
-    const payload = { username: user.name, useremail: user.email };
+    const payload = {
+      sub: user.id,
+      username: user.name,
+      useremail: user.email,
+    };
     const options = {
       expiresIn: expiration,
       issuer: 'dnc_hotel',
-      sub: user.id,
       audience: 'users',
     };
     return {
@@ -83,7 +86,7 @@ export class AuthService {
 
     const id = decoded.sub;
 
-    const user = await this.userService.update(Number(id), password);
+    const user = await this.userService.update(Number(id), { password });
     return this.generateToken(user);
   }
 
