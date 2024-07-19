@@ -9,12 +9,11 @@ import { Request, Response, NextFunction } from 'express';
 export class UserIdCheckMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const userId = req.params.id;
-
     if (!userId) {
       throw new BadRequestException('User ID is required');
     }
 
-    if (isNaN(Number(userId))) {
+    if (userId && isNaN(Number(userId))) {
       throw new BadRequestException('Invalid User ID');
     }
 

@@ -9,6 +9,7 @@ import { Role, User } from '@prisma/client';
 import { AuthRegisterDTO } from './dto/authRegister.dto';
 import { ValidateTokenDTO } from './dto/validateToken.dto';
 import { AuthResetPasswordDTO } from './dto/authResetPassword.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -16,9 +17,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly userService: UserService,
+    private readonly mailerService: MailerService,
   ) {}
 
-  async generateToken(user: User, expiration: string = '1d') {
+  generateToken(user: User, expiration: string = '1d') {
     const payload = {
       sub: user.id,
       username: user.name,
@@ -66,10 +68,23 @@ export class AuthService {
       throw new UnauthorizedException('Email is incorrect');
     }
 
-    const token = this.generateToken(user, '30m');
+    const { access_token } = this.generateToken(user, '30m');
 
-    // Enviar o email com o token jwt para resetar a senha
-    return token;
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Reset Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center; border: 2px solid #041d40; border-radius: 10px; margin: auto; width: 60%;">
+          <h1 style="color: #041d40;">Password Reset Verification Code</h1>
+          <h3 style="color: #041d40;">Dear ${user.name},</h3>
+          <p style="font-size: 16px; color: #333;">Please manually select and copy your reset token:</p>
+          <textarea id="tokenText" readonly style="width: 500px; height: 80px; font-size: 14px; border: 1px solid #041d40; border-radius: 5px; padding: 10px; color: #041d40; background-color: #f9f9f9; resize: none; display: block; margin: 10px auto;">${access_token}</textarea>
+          <p style="margin-top: 20px;">Best regards,<br><span style="font-weight: bold; color: #041d40;">DNC Hotel</span></p>
+        </div>
+      `,
+    });
+
+    return `A verification code has been sent to ${email}`;
   }
 
   async reset({ token, password }: AuthResetPasswordDTO) {
