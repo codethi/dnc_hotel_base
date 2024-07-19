@@ -6,6 +6,13 @@ import {
   Patch,
   Delete,
   UseGuards,
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  Param,
 } from '@nestjs/common';
 import { HotelsService } from './hotels.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
@@ -14,9 +21,11 @@ import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { RoleGuard } from 'src/shared/guards/role.guard';
 import { Role, User as TypeUser } from '@prisma/client';
 import { Roles } from 'src/shared/decorators/roles.decorator';
-import { UserMatchGuard } from 'src/shared/guards/userMatch.guard';
 import { ParamId } from 'src/shared/decorators/paramId.decorator';
 import { User } from 'src/shared/decorators/user.decorator';
+import { OwnerHotelGuard } from 'src/shared/guards/ownerHotel.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidationInterceptor } from 'src/shared/interceptors/fileValidation.interceptor';
 
 @UseGuards(AuthGuard, RoleGuard)
 @Controller('hotels')
@@ -36,22 +45,52 @@ export class HotelsController {
   }
 
   @Roles(Role.ADMIN, Role.USER)
+  @Get('filter')
+  async findByName(@Query('name') name: string) {
+    return await this.hotelsService.findByName(name);
+  }
+
+  @Roles(Role.ADMIN, Role.USER)
   @Get(':id')
   async findOne(@ParamId() id: number) {
     return await this.hotelsService.findOne(id);
   }
 
-  @UseGuards(UserMatchGuard)
+  @UseGuards(OwnerHotelGuard)
   @Roles(Role.ADMIN)
   @Patch(':id')
-  async update(@ParamId() id: number, @Body() updateHotelDto: UpdateHotelDto) {
-    return await this.hotelsService.update(id, updateHotelDto);
+  async update(@ParamId() id: number, @Body() body: UpdateHotelDto) {
+    return await this.hotelsService.update(id, body);
   }
 
-  @UseGuards(UserMatchGuard)
+  @UseGuards(OwnerHotelGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
   async remove(@ParamId() id: number) {
-    return await this.hotelsService.remove(+id);
+    return await this.hotelsService.remove(id);
+  }
+
+  @UseInterceptors(FileInterceptor('image'), FileValidationInterceptor)
+  @Patch('image/:hotelId')
+  async uploadAvatar(
+    @Param('hotelId') hotelId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: 'image/*',
+          }),
+          new MaxFileSizeValidator({ maxSize: 900 * 1024 }),
+        ],
+      }),
+    )
+    image: Express.Multer.File,
+  ) {
+    console.log(image);
+    const userUpdated = await this.hotelsService.updateHotelImage(
+      +hotelId,
+      image.filename,
+    );
+    return userUpdated;
   }
 }

@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { join, resolve } from 'path';
+import { stat, unlink } from 'fs/promises';
 
 @Injectable()
 export class HotelsService {
@@ -14,11 +16,16 @@ export class HotelsService {
   }
 
   findAll() {
-    return this.prisma.hotel.findMany();
+    return this.prisma.hotel.findMany({
+      include: { owner: true },
+    });
   }
 
   findOne(id: number) {
-    return this.prisma.hotel.findUnique({ where: { id } });
+    return this.prisma.hotel.findUnique({
+      where: { id },
+      include: { owner: true },
+    });
   }
 
   update(id: number, updateHotelDto: UpdateHotelDto) {
@@ -30,5 +37,34 @@ export class HotelsService {
 
   remove(id: number) {
     return this.prisma.hotel.delete({ where: { id } });
+  }
+
+  findByName(name: string) {
+    return this.prisma.hotel.findMany({
+      where: { name: { contains: name } },
+      include: { owner: true },
+    });
+  }
+
+  async updateHotelImage(id: number, imageFileName: string) {
+    const hotel = await this.findOne(id);
+    const directory = resolve(__dirname, '..', '..', '..', 'uploads');
+
+    if (!hotel) {
+      throw new NotFoundException('Hotel not found.');
+    }
+
+    if (hotel.image) {
+      const userAvatarFilePath = join(directory, hotel.image);
+      const userAvatarFileExists = await stat(userAvatarFilePath);
+
+      if (userAvatarFileExists) {
+        await unlink(userAvatarFilePath);
+      }
+    }
+
+    const userUpdated = await this.update(id, { image: imageFileName });
+
+    return userUpdated;
   }
 }
