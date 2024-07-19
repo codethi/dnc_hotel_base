@@ -2,8 +2,11 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -23,6 +26,7 @@ import { RoleGuard } from 'src/shared/guards/role.guard';
 import { UserMatchGuard } from 'src/shared/guards/userMatch.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from 'src/shared/decorators/user.decorator';
+import { FileValidationInterceptor } from 'src/shared/interceptors/fileValidation.interceptor';
 
 @UseInterceptors(LoggingInterceptor)
 @UseGuards(AuthGuard, RoleGuard)
@@ -43,11 +47,21 @@ export class UserController {
     return users;
   }
 
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(FileInterceptor('avatar'), FileValidationInterceptor)
   @Post('avatar')
   async uploadAvatar(
     @User() user: TypeUser,
-    @UploadedFile() avatar: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: 'image/*',
+          }),
+          new MaxFileSizeValidator({ maxSize: 900 * 1024 }),
+        ],
+      }),
+    )
+    avatar: Express.Multer.File,
   ) {
     const userUpdated = await this.userService.updateUserAvatar(
       user.id,
