@@ -15,10 +15,23 @@ export class HotelsService {
     return hotel;
   }
 
-  findAll() {
-    return this.prisma.hotel.findMany({
+  async findAll(page: number = 1, limit: number = 10) {
+    const offset = (page - 1) * limit;
+
+    const hotels = await this.prisma.hotel.findMany({
+      skip: offset,
+      take: limit,
       include: { owner: true },
     });
+
+    const total = await this.prisma.hotel.count();
+
+    return {
+      data: hotels,
+      total,
+      page,
+      limit,
+    };
   }
 
   findOne(id: number) {
@@ -66,5 +79,11 @@ export class HotelsService {
     const userUpdated = await this.update(id, { image: imageFileName });
 
     return userUpdated;
+  }
+
+  async findHotelsByOwner(ownerId: number) {
+    return this.prisma.hotel.findMany({
+      where: { ownerId },
+    });
   }
 }

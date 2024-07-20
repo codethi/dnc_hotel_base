@@ -26,6 +26,7 @@ import { User } from 'src/shared/decorators/user.decorator';
 import { OwnerHotelGuard } from 'src/shared/guards/ownerHotel.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationInterceptor } from 'src/shared/interceptors/fileValidation.interceptor';
+import { PaginationDto } from './dto/pagination.dto';
 
 @UseGuards(AuthGuard, RoleGuard)
 @Controller('hotels')
@@ -40,8 +41,9 @@ export class HotelsController {
 
   @Roles(Role.ADMIN, Role.USER)
   @Get()
-  async findAll() {
-    return await this.hotelsService.findAll();
+  async findAll(@Query() paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+    return await this.hotelsService.findAll(page, limit);
   }
 
   @Roles(Role.ADMIN, Role.USER)
