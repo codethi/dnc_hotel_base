@@ -52,6 +52,12 @@ export class HotelsController {
     return await this.hotelsService.findByName(name);
   }
 
+  @Roles(Role.ADMIN)
+  @Get('owner')
+  async findAllByOwner(@User('id') id: number) {
+    return await this.hotelsService.findAllByOwner(id);
+  }
+
   @Roles(Role.ADMIN, Role.USER)
   @Get(':id')
   async findOne(@ParamId() id: number) {
@@ -74,7 +80,7 @@ export class HotelsController {
 
   @UseInterceptors(FileInterceptor('image'), FileValidationInterceptor)
   @Patch('image/:hotelId')
-  async uploadAvatar(
+  async uploadImage(
     @Param('hotelId') hotelId: string,
     @UploadedFile(
       new ParseFilePipe({

@@ -54,9 +54,13 @@ export class HotelsService {
 
   findByName(name: string) {
     return this.prisma.hotel.findMany({
-      where: { name: { contains: name } },
+      where: { name: { contains: name, mode: 'insensitive' } },
       include: { owner: true },
     });
+  }
+
+  findAllByOwner(id: number) {
+    return this.prisma.hotel.findMany({ where: { ownerId: id } });
   }
 
   async updateHotelImage(id: number, imageFileName: string) {
